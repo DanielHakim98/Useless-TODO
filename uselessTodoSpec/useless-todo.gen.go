@@ -11,6 +11,10 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+type FindTodosParams struct {
+	Limit int
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -29,25 +33,26 @@ type ServerInterface interface {
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
-type Unimplemented struct{}
+type TodoAPI struct{}
 
 // (GET /todos)
-func (_ Unimplemented) FindTodos(w http.ResponseWriter, r *http.Request, params FindTodosParams) {
-	w.WriteHeader(http.StatusNotImplemented)
+func (todo TodoAPI) FindTodos(w http.ResponseWriter, r *http.Request, params FindTodosParams) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`[{"title": "do 1", "content": "pretty much it", "date": "2024-02-04"}]`))
 }
 
 // (POST /todos)
-func (_ Unimplemented) AddTodo(w http.ResponseWriter, r *http.Request) {
+func (_ TodoAPI) AddTodo(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // (DELETE /todos/{id})
-func (_ Unimplemented) DeleteTodo(w http.ResponseWriter, r *http.Request, id int64) {
+func (_ TodoAPI) DeleteTodo(w http.ResponseWriter, r *http.Request, id int64) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // (GET /todos/{id})
-func (_ Unimplemented) FindTodoById(w http.ResponseWriter, r *http.Request, id int64) {
+func (_ TodoAPI) FindTodoById(w http.ResponseWriter, r *http.Request, id int64) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -64,18 +69,18 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) FindTodos(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var err error
+	// var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindTodosParams
-
+	fmt.Println(r.URL.Query())
 	// ------------- Optional query parameter "limit" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
-	}
+	// err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	// if err != nil {
+	// 	siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+	// 	return
+	// }
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.FindTodos(w, r, params)
