@@ -19,14 +19,6 @@ paths:
       description: |
         Returns all todos from the system that the user has access to
       operationId: findTodos
-      parameters:
-        - name: limit
-          in: query
-          description: maximum number of results to return
-          required: false
-          schema:
-            type: integer
-            format: int32
       responses:
         "200":
           description: todos response
