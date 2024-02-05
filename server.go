@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/jackc/pgx/v5"
@@ -15,11 +16,16 @@ type ServerAPI struct {
 func (server ServerAPI) FindTodos(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var todoList []Todo
-	err := server.DB.QueryRow(
-		r.Context(),
-		`SELECT id, title, date, content FROM useless_todo.todo_list`).Scan(&todoList)
+	rows, err := server.DB.Query(r.Context(),
+		`
+		SELECT
+			id,
+			title,
+			COALESCE(to_char(updated_at, 'MM-DD-YYYY HH24:MI:SS'), '') AS date,
+			content
+		FROM useless_todo.todo_list`)
 	if err != nil {
+		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		errRes := Error{
 			Code:    http.StatusInternalServerError,
@@ -27,6 +33,16 @@ func (server ServerAPI) FindTodos(w http.ResponseWriter, r *http.Request) {
 		}
 		json.NewEncoder(w).Encode(errRes)
 		return
+	}
+	todoList := []Todo{}
+	for rows.Next() {
+		todo := Todo{}
+		err := rows.Scan(&todo.Id, &todo.Title, &todo.Date, &todo.Content)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		todoList = append(todoList, todo)
 	}
 
 	by, _ := json.Marshal(todoList)
