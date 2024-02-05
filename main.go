@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/DanielHakim98/Useless-TODO/uselessTodoSpec"
 	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-	api := uselessTodoSpec.TodoAPI{}
+	api := ServerAPI{}
 	r := chi.NewRouter()
-	r.Mount("/useless-todo", uselessTodoSpec.Handler(&api))
+	r.Mount("/api/v1/", Handler(api))
 	fmt.Println("Running server")
 	http.ListenAndServe(":8080", r)
 }
