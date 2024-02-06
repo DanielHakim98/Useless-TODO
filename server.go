@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/DanielHakim98/Useless-TODO/api"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -27,16 +28,16 @@ func (server ServerAPI) FindTodos(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		errRes := Error{
+		errRes := api.Error{
 			Code:    http.StatusInternalServerError,
 			Message: "Error occured during DB query",
 		}
 		json.NewEncoder(w).Encode(errRes)
 		return
 	}
-	todoList := []Todo{}
+	todoList := []api.Todo{}
 	for rows.Next() {
-		todo := Todo{}
+		todo := api.Todo{}
 		err := rows.Scan(&todo.Id, &todo.Title, &todo.Date, &todo.Content)
 		if err != nil {
 			log.Println(err)
