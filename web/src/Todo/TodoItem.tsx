@@ -1,18 +1,13 @@
 function TodoItem() {
   return (
-    <div className="Card">
-      <div className="Card--text">
-        <h1>Insert TODO title here</h1>
-        <span></span>
+    <div>
+      <div>
+        <h1>TODO Title</h1>
+        <span>TODO Description</span>
       </div>
-      <div className="Card--button">
+      <div>
         <button onClick={(e) => console.log(e)}>Complete</button>
-        <button
-          onClick={(e) => console.log(e)}
-          className="Card--button__delete"
-        >
-          Delete
-        </button>
+        <button onClick={(e) => console.log(e)}>Delete</button>
       </div>
     </div>
   );
