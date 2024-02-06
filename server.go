@@ -6,25 +6,19 @@ import (
 	"net/http"
 
 	"github.com/DanielHakim98/Useless-TODO/api"
-	"github.com/jackc/pgx/v5"
+	"github.com/DanielHakim98/Useless-TODO/db"
 )
 
 type ServerAPI struct {
-	DB *pgx.Conn
+	DB db.ServerDB
 }
 
 // (GET /todos)
 func (server ServerAPI) FindTodos(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	rows, err := server.DB.Query(r.Context(),
-		`
-		SELECT
-			id,
-			title,
-			COALESCE(to_char(updated_at, 'MM-DD-YYYY HH24:MI:SS'), '') AS date,
-			content
-		FROM useless_todo.todo_list`)
+	todoList := []api.Todo{}
+	err := server.DB.FindTodos(r.Context(), &todoList)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -35,18 +29,18 @@ func (server ServerAPI) FindTodos(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errRes)
 		return
 	}
-	todoList := []api.Todo{}
-	for rows.Next() {
-		todo := api.Todo{}
-		err := rows.Scan(&todo.Id, &todo.Title, &todo.Date, &todo.Content)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		todoList = append(todoList, todo)
-	}
 
-	by, _ := json.Marshal(todoList)
+	by, err := json.Marshal(todoList)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		errRes := api.Error{
+			Code:    http.StatusInternalServerError,
+			Message: "Error while preparing JSON response",
+		}
+		json.NewEncoder(w).Encode(errRes)
+		return
+	}
 	w.Write(by)
 }
 

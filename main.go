@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/DanielHakim98/Useless-TODO/api"
+	"github.com/DanielHakim98/Useless-TODO/db"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 )
@@ -41,7 +42,8 @@ func main() {
 	}
 	defer conn.Close(context.Background())
 
-	r := initRoute(ServerAPI{DB: conn})
+	sDB := db.ServerDB{Core: conn}
+	r := initRoute(ServerAPI{DB: sDB})
 	fmt.Println("Running server")
 	http.ListenAndServe(":8080", r)
 }
