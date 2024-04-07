@@ -1,12 +1,34 @@
-package db
+package server
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
+	"time"
 
 	"github.com/DanielHakim98/Useless-TODO/api"
 	"github.com/jackc/pgx/v5"
 )
+
+func GetDB() (conn *pgx.Conn, err error) {
+	cfg := getConfig()
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		cfg.dbUser, cfg.dbPassword, cfg.dbHostname, cfg.dbPort, cfg.dbName)
+
+	retry := 0
+	maxRetry := 5
+	for retry < maxRetry {
+		conn, err = pgx.Connect(context.Background(), connString)
+		if err == nil {
+			return conn, nil
+		}
+		fmt.Fprintf(os.Stderr, "Unable to connect to database. Retrying in 5 seconds. Error: %v\n", err)
+		time.Sleep(5 * time.Second)
+	}
+
+	return nil, err
+}
 
 type ServerDB struct {
 	Core *pgx.Conn

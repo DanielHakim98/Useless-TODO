@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -6,11 +6,10 @@ import (
 	"net/http"
 
 	"github.com/DanielHakim98/Useless-TODO/api"
-	"github.com/DanielHakim98/Useless-TODO/db"
 )
 
 type ServerAPI struct {
-	DB db.ServerDB
+	DB ServerDB
 }
 
 // (GET /todos)
