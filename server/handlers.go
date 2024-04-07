@@ -85,7 +85,23 @@ func (server ServerAPI) AddTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("{\"status\": \"OK\"}"))
+	todo, err := server.DB.AddTodo(r.Context(), body)
+	if err != nil {
+		log.Println(err)
+		server.errorResponse(w, http.StatusInternalServerError,
+			"Error occured while creating DB data")
+		return
+	}
+
+	res, err := json.Marshal(todo)
+	if err != nil {
+		log.Println(err)
+		server.errorResponse(w, http.StatusInternalServerError,
+			"Error occured while generating JSON response")
+		return
+	}
+
+	w.Write(res)
 }
 
 // (DELETE /todos/{id})

@@ -69,3 +69,22 @@ func (sdb ServerDB) FindTodos(ctx context.Context, todoList *[]api.Todo) (err er
 	}
 	return nil
 }
+
+func (sdb ServerDB) AddTodo(ctx context.Context, body api.AddTodoJSONRequestBody) (api.Todo, error) {
+	rows := sdb.Core.QueryRow(
+		ctx,
+		`	INSERT INTO todo_list (title, content, created_at)
+			VALUES ($1, $2, now())
+			RETURNING id, to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"')
+		`, body.Title, body.Content)
+
+	var todo api.Todo
+	todo.Title = body.Title
+	todo.Content = body.Content
+	err := rows.Scan(&todo.Id, &todo.Date)
+	if err != nil {
+		return api.Todo{}, err
+	}
+
+	return todo, nil
+}
