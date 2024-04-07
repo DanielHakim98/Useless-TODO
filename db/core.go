@@ -21,7 +21,7 @@ func (sdb ServerDB) FindTodos(ctx context.Context, todoList *[]api.Todo) (err er
 			title,
 			content,
 			COALESCE(to_char(updated_at, 'MM-DD-YYYY HH24:MI:SS'), '') AS date
-		FROM useless_todo.todo_list`)
+		FROM todo_list`)
 	if err != nil {
 		return err
 	}

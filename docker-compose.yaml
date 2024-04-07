@@ -7,12 +7,20 @@ services:
       dockerfile: ./Dockerfile
     restart: always
     environment:
-      POSTGRES_PASSWORD: password
+      TZ: Asia/Kuala_Lumpur
+      POSTGRES_DB: todo_db
+      POSTGRES_USER: todo_admin
+      POSTGRES_PASSWORD: todo_password
       PSQL_EDITOR: /usr/bin/nvim
     ports:
       - 5432:5432
 
   server:
+    env_file:
+      - path: ./dev.env
+        required: true
+    environment:
+      SERVER_HOSTNAME: server
     build:
       context: .
       dockerfile: ./deploy/server/Dockerfile
