@@ -12,12 +12,19 @@ type Error struct {
 // NewTodo defines model for NewTodo.
 type NewTodo struct {
 	Content string `json:"content"`
-	Date    string `json:"date"`
 	Title   string `json:"title"`
 }
 
 // Todo defines model for Todo.
 type Todo struct {
+	Content string `json:"content"`
+	Date    string `json:"date"`
+	Id      int64  `json:"id"`
+	Title   string `json:"title"`
+}
+
+// Todos defines model for Todos.
+type Todos struct {
 	Content string `json:"content"`
 	Date    string `json:"date"`
 	Id      int64  `json:"id"`

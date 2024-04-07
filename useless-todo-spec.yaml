@@ -27,7 +27,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Todo"
+                  $ref: "#/components/schemas/Todos"
         default:
           description: unexpected error
           content:
@@ -50,7 +50,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Todo"
+                $ref: "#/components/schemas/Todos"
         default:
           description: unexpected error
           content:
@@ -75,7 +75,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Todo"
+                $ref: "#/components/schemas/Todos"
         default:
           description: unexpected error
           content:
@@ -104,9 +104,9 @@ paths:
                 $ref: "#/components/schemas/Error"
 components:
   schemas:
-    Todo:
+    Todos:
       allOf:
-        - $ref: "#/components/schemas/NewTodo"
+        - $ref: "#/components/schemas/Todo"
         - type: object
           required:
             - id
@@ -115,18 +115,33 @@ components:
               type: integer
               format: int64
 
-    NewTodo:
+    Todo:
       type: object
       required:
         - title
         - content
         - date
+        - id
       properties:
         title:
           type: string
         content:
           type: string
         date:
+          type: string
+        id:
+          type: integer
+          format: int64
+
+    NewTodo:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+        content:
           type: string
 
     Error:
