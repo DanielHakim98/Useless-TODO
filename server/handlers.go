@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/DanielHakim98/Useless-TODO/api"
 )
@@ -47,11 +48,11 @@ func (server ServerAPI) FindTodos(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server ServerAPI) validateNewTodo(body api.AddTodoJSONRequestBody) error {
-	if body.Content == "" {
+	if strings.TrimSpace(body.Content) == "" {
 		return fmt.Errorf("missing value key 'content'")
 	}
 
-	if body.Title == "" {
+	if strings.TrimSpace(body.Title) == "" {
 		return fmt.Errorf("missing value key 'title'")
 	}
 
