@@ -20,14 +20,14 @@ func (sdb ServerDB) FindTodos(ctx context.Context, todoList *[]api.Todo) (err er
 			id,
 			title,
 			content,
-			COALESCE(to_char(updated_at, 'MM-DD-YYYY HH24:MI:SS'), '') AS date
+			to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"')
 		FROM todo_list`)
 	if err != nil {
 		return err
 	}
 	for rows.Next() {
 		todo := api.Todo{}
-		err := rows.Scan(&todo.Id, &todo.Title, &todo.Date, &todo.Content)
+		err := rows.Scan(&todo.Id, &todo.Title, &todo.Content, &todo.Date)
 		if err != nil {
 			log.Println(err)
 			continue
