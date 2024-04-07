@@ -11,7 +11,8 @@ import (
 )
 
 func Start() {
-	conn, err := GetDB()
+	cfg := GetConfig()
+	conn, err := GetDB(cfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to connect to database after multiple retries: %v\n", err)
 		os.Exit(1)
@@ -19,19 +20,11 @@ func Start() {
 	defer conn.Close(context.Background())
 
 	sDB := ServerDB{Core: conn}
+	sAPI := ServerAPI{DB: sDB}
+
 	r := chi.NewRouter()
-	r.Mount("/api/v1/", api.Handler(ServerAPI{DB: sDB}))
+	r.Mount("/api/v1/", api.Handler(sAPI))
 
-	port := os.Getenv("SERVER_PORT")
-	if port == "" {
-		port = "80"
-	}
-
-	hostname := os.Getenv("SERVER_HOSTNAME")
-	if hostname == "" {
-		hostname = ""
-	}
-
-	fmt.Fprintln(os.Stderr, "Running server at '"+hostname+":"+port+"'")
-	http.ListenAndServe(hostname+":"+port, r)
+	fmt.Fprintln(os.Stderr, "Running server at '"+cfg.hostname+":"+cfg.port+"'")
+	http.ListenAndServe(cfg.hostname+":"+cfg.port, r)
 }

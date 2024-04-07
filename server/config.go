@@ -3,13 +3,26 @@ package server
 import (
 	"fmt"
 	"os"
+	"sync"
+)
+
+var (
+	configOnce sync.Once
 )
 
 type DBConfig struct {
 	dbUser, dbPassword, dbName, dbPort, dbHostname string
+	hostname, port                                 string
 }
 
-func getConfig() DBConfig {
+func GetConfig() (cfg DBConfig) {
+	configOnce.Do(func() {
+		cfg = initConfig()
+	})
+	return
+}
+
+func initConfig() DBConfig {
 	dbUser := os.Getenv("DB_USER")
 	if dbUser == "" {
 		fmt.Fprintln(os.Stderr, "Error: environment variable 'DB_USER' not found")
@@ -40,5 +53,18 @@ func getConfig() DBConfig {
 		os.Exit(1)
 	}
 
-	return DBConfig{dbUser, dbPassword, dbName, dbPort, dbHostname}
+	hostname := os.Getenv("SERVER_HOSTNAME")
+	if hostname == "" {
+		fmt.Fprintln(os.Stderr, "Info: environment variable 'SERVER_HOSTNAME' not set. Fallback to 0.0.0.0")
+		hostname = ""
+	}
+
+	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		fmt.Fprintln(os.Stderr, "Info: environment variable 'SERVER_PORT' not set. Fallback to 80")
+		port = "80"
+	}
+
+	return DBConfig{dbUser, dbPassword, dbName, dbPort,
+		dbHostname, hostname, port}
 }

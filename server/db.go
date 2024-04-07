@@ -5,14 +5,25 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/DanielHakim98/Useless-TODO/api"
 	"github.com/jackc/pgx/v5"
 )
 
-func GetDB() (conn *pgx.Conn, err error) {
-	cfg := getConfig()
+var (
+	dbOnce sync.Once
+)
+
+func GetDB(cfg DBConfig) (conn *pgx.Conn, err error) {
+	dbOnce.Do(func() {
+		conn, err = initDB(cfg)
+	})
+	return
+}
+
+func initDB(cfg DBConfig) (conn *pgx.Conn, err error) {
 	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		cfg.dbUser, cfg.dbPassword, cfg.dbHostname, cfg.dbPort, cfg.dbName)
 
