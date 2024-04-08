@@ -6,9 +6,11 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/DanielHakim98/Useless-TODO/api"
+	"github.com/jackc/pgx/v5"
 )
 
 type ServerAPI struct {
@@ -108,7 +110,27 @@ func (server ServerAPI) AddTodo(w http.ResponseWriter, r *http.Request) {
 
 // (DELETE /todos/{id})
 func (server ServerAPI) DeleteTodo(w http.ResponseWriter, r *http.Request, id int64) {
-	w.WriteHeader(http.StatusNotImplemented)
+	w.Header().Set("Content-Type", "application/json")
+	deletedTodo, err := server.DB.DeleteTodo(r.Context(), id)
+	if err != nil {
+		log.Println(err)
+
+		// ignore non-existing id from DB. Treat it as if it's deleted
+		if err == pgx.ErrNoRows {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		server.errorResponse(w, http.StatusInternalServerError,
+			"Error occured while deleting DB data")
+		return
+	}
+
+	// For debugging purpose only, not needed for actual live environment
+	by, _ := json.Marshal(deletedTodo)
+	fmt.Fprintln(os.Stderr, string(by))
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // (GET /todos/{id})
