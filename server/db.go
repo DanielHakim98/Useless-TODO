@@ -63,6 +63,8 @@ func (sdb ServerDB) FindTodos(ctx context.Context, todoList *[]api.Todo) (err er
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		todo := api.Todo{}
 		err := rows.Scan(&todo.Id, &todo.Title, &todo.Content, &todo.Date)
