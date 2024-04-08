@@ -135,5 +135,29 @@ func (server ServerAPI) DeleteTodo(w http.ResponseWriter, r *http.Request, id in
 
 // (GET /todos/{id})
 func (server ServerAPI) FindTodoById(w http.ResponseWriter, r *http.Request, id int64) {
-	w.WriteHeader(http.StatusNotImplemented)
+	w.Header().Set("Content-Type", "application/json")
+	todo, err := server.DB.FindTodoById(r.Context(), id)
+	// exclude empty data from being treated as error
+	if err != nil {
+		log.Println(err)
+		if err == pgx.ErrNoRows {
+			server.errorResponse(w, http.StatusNotFound,
+				"Record not found")
+			return
+		}
+		server.errorResponse(w, http.StatusInternalServerError,
+			"Error occured while querying DB data")
+		return
+	}
+
+	res, err := json.Marshal([]api.Todo{todo})
+	if err != nil {
+		log.Println(err)
+		server.errorResponse(w, http.StatusInternalServerError,
+			"Error occured while generating JSON response")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
 }

@@ -110,3 +110,25 @@ func (sdb ServerDB) DeleteTodo(ctx context.Context, id int64) (api.Todo, error) 
 
 	return todo, nil
 }
+
+func (sdb ServerDB) FindTodoById(ctx context.Context, id int64) (api.Todo, error) {
+	rows := sdb.Core.QueryRow(
+		ctx,
+		`
+		SELECT
+			id,
+			title,
+			content,
+			to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"')
+		FROM todo_list
+		WHERE id=$1
+		`, id)
+	var todo api.Todo
+	err := rows.Scan(&todo.Id, &todo.Title, &todo.Content, &todo.Date)
+	if err != nil {
+		log.Println(err)
+		return api.Todo{}, err
+	}
+
+	return todo, nil
+}
