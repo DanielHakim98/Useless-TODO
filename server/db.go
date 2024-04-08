@@ -54,7 +54,10 @@ func (sdb ServerDB) FindTodos(ctx context.Context, todoList *[]api.Todo) (err er
 			title,
 			content,
 			to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"')
-		FROM todo_list`)
+		FROM todo_list
+		WHERE
+			deleted_at IS NULL
+		`)
 	if err != nil {
 		return err
 	}
@@ -71,6 +74,12 @@ func (sdb ServerDB) FindTodos(ctx context.Context, todoList *[]api.Todo) (err er
 }
 
 func (sdb ServerDB) AddTodo(ctx context.Context, body api.AddTodoJSONRequestBody) (api.Todo, error) {
+	// This adding todo method doesn't take into account
+	// for identical 'title' and 'content' data from soft-deleted.
+	// So even when once record soft-deleted and new identical record
+	// is added, the record is treated as new record without updating
+	// previous soft-delted record with exact same 'content' and 'title'
+
 	rows := sdb.Core.QueryRow(
 		ctx,
 		`	INSERT INTO todo_list (title, content, created_at)
@@ -92,12 +101,13 @@ func (sdb ServerDB) AddTodo(ctx context.Context, body api.AddTodoJSONRequestBody
 func (sdb ServerDB) DeleteTodo(ctx context.Context, id int64) (api.Todo, error) {
 	rows := sdb.Core.QueryRow(
 		ctx,
-		` DELETE FROM todo_list
-		  WHERE id = $1
-		  RETURNING
-			title,
-			content,
-			to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"')
+		`	UPDATE todo_list
+			SET deleted_at=now()
+			WHERE id = $1
+		  	RETURNING
+				title,
+				content,
+				to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"')
 		`, id,
 	)
 
@@ -121,7 +131,9 @@ func (sdb ServerDB) FindTodoById(ctx context.Context, id int64) (api.Todo, error
 			content,
 			to_char(created_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS"Z"')
 		FROM todo_list
-		WHERE id=$1
+		WHERE
+			id=$1
+			AND deleted_at IS NULL
 		`, id)
 	var todo api.Todo
 	err := rows.Scan(&todo.Id, &todo.Title, &todo.Content, &todo.Date)
