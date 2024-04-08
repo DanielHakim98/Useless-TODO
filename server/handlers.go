@@ -161,3 +161,50 @@ func (server ServerAPI) FindTodoById(w http.ResponseWriter, r *http.Request, id 
 	w.WriteHeader(http.StatusOK)
 	w.Write(res)
 }
+
+// (PATCH /todos/{id})
+func (server ServerAPI) UpdateTodoById(w http.ResponseWriter, r *http.Request, id int64) {
+	by, err := io.ReadAll(r.Body)
+	if err != nil {
+		server.errorResponse(w, http.StatusInternalServerError,
+			"Error occured while parsing request body")
+		return
+	}
+
+	var body api.AddTodoJSONRequestBody
+	err = json.Unmarshal(by, &body)
+	if err != nil {
+		log.Println(err)
+		server.errorResponse(w, http.StatusBadRequest,
+			"Invalid request body format/structure")
+		return
+	}
+
+	// Cleanup any excessive whitespace
+	body.Content = strings.TrimSpace(body.Content)
+	body.Title = strings.TrimSpace(body.Title)
+
+	todo, err := server.DB.UpdateTodoById(r.Context(), id, body)
+	if err != nil {
+		log.Println(err)
+		if err == pgx.ErrNoRows {
+			server.errorResponse(w, http.StatusNotFound,
+				"Record not found")
+			return
+		}
+		server.errorResponse(w, http.StatusInternalServerError,
+			"Error occured while updating DB data")
+		return
+	}
+
+	res, err := json.Marshal(todo)
+	if err != nil {
+		log.Println(err)
+		server.errorResponse(w, http.StatusInternalServerError,
+			"Error occured while generating JSON response")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+}

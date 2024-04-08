@@ -25,6 +25,9 @@ type ServerInterface interface {
 
 	// (GET /todos/{id})
 	FindTodoById(w http.ResponseWriter, r *http.Request, id int64)
+
+	// (PATCH /todos/{id})
+	UpdateTodoById(w http.ResponseWriter, r *http.Request, id int64)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -48,6 +51,11 @@ func (_ Unimplemented) DeleteTodo(w http.ResponseWriter, r *http.Request, id int
 
 // (GET /todos/{id})
 func (_ Unimplemented) FindTodoById(w http.ResponseWriter, r *http.Request, id int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PATCH /todos/{id})
+func (_ Unimplemented) UpdateTodoById(w http.ResponseWriter, r *http.Request, id int64) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -133,6 +141,32 @@ func (siw *ServerInterfaceWrapper) FindTodoById(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.FindTodoById(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// UpdateTodoById operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTodoById(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTodoById(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -266,6 +300,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/todos/{id}", wrapper.FindTodoById)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/todos/{id}", wrapper.UpdateTodoById)
 	})
 
 	return r

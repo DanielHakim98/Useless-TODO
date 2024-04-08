@@ -1,10 +1,12 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -143,4 +145,54 @@ func (sdb ServerDB) FindTodoById(ctx context.Context, id int64) (api.Todo, error
 	}
 
 	return todo, nil
+}
+
+func (sdb ServerDB) UpdateTodoById(ctx context.Context,
+	id int64, body api.NewTodo) (api.Todo, error) {
+
+	var queryBuffer bytes.Buffer
+	queryBuffer.WriteString(`
+		UPDATE todo_list
+		SET updated_at = now()
+	`)
+
+	var queryParams []interface{}
+	paramIndex := 1
+
+	if len(body.Title) > 0 {
+		queryBuffer.WriteString(", title = $" + strconv.Itoa(paramIndex))
+		queryParams = append(queryParams, body.Title)
+		paramIndex++
+	}
+
+	if len(body.Content) > 0 {
+		queryBuffer.WriteString(", content = $" + strconv.Itoa(paramIndex))
+		queryParams = append(queryParams, body.Content)
+		paramIndex++
+	}
+
+	queryParams = append(queryParams, id)
+
+	queryBuffer.WriteString(
+		" WHERE id = $" + strconv.Itoa(paramIndex) +
+			`
+				AND deleted_at IS NULL
+				RETURNING
+					id,
+					title,
+					content,
+					to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')`)
+	query := queryBuffer.String()
+
+	rows := sdb.Core.QueryRow(
+		ctx, query, queryParams...)
+	var todo api.Todo
+	err := rows.Scan(&todo.Id, &todo.Title, &todo.Content, &todo.Date)
+	if err != nil {
+		log.Println(err)
+		return api.Todo{}, err
+	}
+
+	return todo, nil
+
 }
