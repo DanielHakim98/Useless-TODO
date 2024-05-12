@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: todo_password
       PSQL_EDITOR: /usr/bin/nvim
     ports:
-      - 5432:5432
+      - 5555:5432
 
   server:
     env_file:
